@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="utf-8">
+
+    <title></title>
+    <meta name="description" content="">
+    <script src="https://api-maps.yandex.ru/2.1/?apikey=a8e3c5f3-1ec8-40b3-a3ba-b972b5e4e9d3&lang=ru_RU" type="text/javascript"></script>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="format-detection" content="address=no">
+
+    <link rel="shortcut icon" href="img/favicon/favicon.ico" type="image/x-icon">
+
+    <link rel="stylesheet" href="css/libs.css">
+    <link rel="stylesheet" href="css/css2.css">
+    <link rel="stylesheet" href="css/for_payment.css">
+    <script src="js/data.js"></script>
+</head>
+
+<body>
+
+    <header class="header" id="header1">
+        <div class="container">
+            <div class="row m-0">
+                <menu>
+                    <a href="" data-href=".pluses">Как работает пазл?</a>
+                    <a href="" data-href=".prices">Сколько можно выиграть?</a>
+                    <a href="" data-href=".priz__els">Как получить приз?</a>
+                </menu>
+            </div>
+        </div>
+        <a href="" class="toggle-menu"><span></span></a>
+    </header>
+    <section class="first">
+        <img class="absolteImageOnTheLeft" src="images/Mobile_Banner1.png">
+        <img src="images\Cover_Render_new.png" alt="" class="first__img2">
+        <span class="big_head">Million Puzzle</span><br>
+        <span class="big_head2">Первый в России денежный пазл</span><br>
+        <div class="small_sec_part">
+            <span class="small_text f_irst"><img src="images/money.png" class="icon-params">После сборки ты получишь от 20 до
+                <h3>1 миллиона рублей!</h3>
+            </span><br>
+            <span class="small_text s_econd"><img src="images/phone.png" class="icon-params icon-params_phone">Пазл собирается в большой QR код, деньги мгновенно зачисляются на карту или телефон после его сканирования</span><br>
+            <span class="small_text t_hird"><img src="images/puzzle.png" class="icon-params">В пазле 256 элементов - соберешь за 1-2 вечера<br>
+            </span>
+
+        </div>
+
+        <div class="ssilka_block">
+            <div class="v_verh"><span class="s_mall_block eightpixel">Обычная цена:</span><span class="s_mall_block correctSmall eightpixel">Цена со скидкой</span>
+            </div>
+            <div class="p_rice spec1"><span class="b_ig_block s24"><del>4000₽</del></span><span class="b_ig_block r_ed"><img src="images/more.png" class="i_mg strela"></span><span class="b_ig_block r_ed s24">1 990 ₽</span></div>
+            <div class="v_lock_ssilka" id="orderSsilka"><button class="v_lock_ssilka s12">заказать со скидкой</button></div>
+            <div class="s_mall_text eightpixel w500"></div>
+            <div class='form md:w-1/2 hidden' id="form">
+
+
+
+
+
+
+                <div class='form__header' id="form__header">
+                    <span class="form__title ">Товары в корзине</span>
+                    <span class='form__close' id="closeForm ">✕</span>
+                </div>
+                <div class='form__product '>
+                    <div class='form__product_content'>
+                        <a :href="millionPuzzleURL " class='form__product__name relative px-3'>MillionPuzzle</a>
+                        <span class="px-2 " id="nowPrice">1470</span>
+                        <span class="px-2 " id="decreaseProductCount"> – </span>
+                        <span id="productCount" class="counter px-2"></span>
+                        <span class="px-2 " id='productCount++'>+</span>
+                        <span class="px-2 totalPrice " id="totalPrice">totalPrice</span>
+                        <span class='position__close px-2' id="resetBin">✕</span>
+                    </div>
+                    <div class="left-wing result " id="totalPrice2">totalPrice.</div>
+                    <div class="left-wing float-right ">
+                        <span class="black-but " id="closeForm">Вернуться</span>
+                        <span class="black-but " id="productCount">Очистить</span>
+                        <span class="yellow-but " id="checkout">оформить заказ</span>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        <div class="deliver hidden" id="deliver_block_last">
+            <div class="m_ain_block">
+                <div class="v_verhnii_block">Доставка и Оплата <span class="crossLeft" id="crossLeft">✕</span></div>
+
+                <div class="h_e_ader big_t_ext toMakeLineBetter">Населенный пункт</div>
+                <div class="in_put"><span class="h_e_ader small_t_ext">Населенный пункт*</span><br><input type="text" class="i_n_put b_i_g_1" id="in_put" placeholder="Населенный пункт"><br><span class="big_t_ext"></span>
+                </div>
+                <div class="cities hidden" id="cities"></div>
+                <div class=hidden id="blockOfInf">
+                    <div class="hidden " id="adressOpen">
+                        <div class="i_nf toMakeLineBetter">Адрес доставки</div>
+                        <div>
+                            <div class="inputDiv BigInp">
+                                <span class="inputField">Улица*</span>
+                                <input type="text" class="i_n_put lineBig" placeholder="Например,тверская" id="street">
+                                <span class="wrongInput hidden" id="wrongStreetInput">Адресс введен некорректно</span>
+                            </div>
+                            <div class="inputDiv">
+                                <span class="inputField">Дом*</span>
+                                <input type="text" class="i_n_put lineBig" placeholder="Например,12А" id="house" pattern="[0-9]+">
+                                <span class="wrongInput hidden " id="wrongHouseInput">Номер дома введен некорректно</span></div>
+                            <div class="inputDiv">
+                                <span class="inputField ">Квартира*</span>
+                                <input type="text " class="i_n_put lineBig" placeholder="Например,11 " id="apartaments">
+                            </div>
+                            <span class="black-but2 butNew" id="adressConfirm">Подтвердить</span></div>
+                    </div>
+                    <div class="PvzOrDelivery hidden toMakeLineBetter" id="PvzOrDelivery">
+                        <div class="i_nf noLine toMakeLineBetter">Доставка</div>
+                        <div class="Delivery blockChoice2 padding-maker" id="delivery_square"></div>
+                        <div class="Pvz padding-maker" id="pvz_square"></div>
+                    </div>
+
+                    <div class="PvzSelectedFinally hidden " id="PvzSelectedFinally"><span class="youChosePvz toMakeLineBetter">вы выбрали Пвз</span>
+                        <div id="needtoInnerTextHere">Пвз не выбран</div>
+                        <div id="changeAnouther" class="cangePvz">выбрать другой Пвз</div>
+                    </div>
+                    <div class="final hidden " id="final">
+                        <div class="cur" id="curService">Выберете курьерскую службу</div>
+                        <div class='cities2' id="optionsAll">
+                            <span class="coreChoice" id="coreChoice">▼</span>
+                            <div class='' id="options"></div>
+                            <span class="hidden sm-th " id="secOption"></span></div>
+                        <div class="personality-input " id="reson_inp">
+                            <!-- <input type="text " class="i_n_put2 " placeholder="фамилия " id="surname"></input>
+                        <span id="wrongsurname" class="hidden ">фамилия введена некорректно</span>
+
+                        <input type="text " class="i_n_put2 " placeholder="имя " id="name"></input>
+                        <span id="wrongname" class="hidden ">имя введено некорректно</span> -->
+
+                            <span class="center1 toMakeLineBetter">Получатель </span></div>
+                        <div>
+                            <div class="inputDiv BigInp">
+                                <span class="inputField">Ф.И.О*</span>
+                                <input type="text " class="i_n_put lineBig" placeholder="Иван Иванович Иванов " id="patronymic">
+                                <span id="wrongname" class="hidden wrongInput">имя введено некорректно</span>
+                            </div>
+
+                            <div class="inputDiv">
+                                <span class="inputField">телефон*</span>
+                                <input type="phone " class="i_n_put lineBig" placeholder="79876543211 " id="phone">
+                                <span id="wrongphone" class="hidden wrongInput">номер телефона введен некорректно</span>
+                            </div>
+                            <div class="inputDiv">
+                                <span class="inputField">email*</span>
+                                <input type="text " class="i_n_put lineBig" placeholder="Test@mail.ru " id="email">
+                                <span id="wrongmail" class="hidden wrongInput">email введен некорректно</span></div>
+                            <div class="payment_way "><span class="payment2 selectedBlock padding-maker" id="payment_card"><input type="radio" checked="true">Банковской картой онлайн<img src="images/cardmini.svg" class="paymentWayClass"></span>
+                                <span class="payment2 hidden padding-maker" id="payment_cash">
+                <input type="radio"> Наличными при получении<img src="images/moneyhand.svg" class="paymentWayClass">
+                </span>
+                                <span class="payment2 hidden padding-maker" id="payment_cardPlace"><input type="radio">Картой при получении<img src="images/cardHand.svg" class="paymentWayClass"></span>
+
+                            </div>
+                        </div>
+                    </div>
+                    <div class="error ">
+                    </div>
+                    <div class="AllwayseOnDisplay">
+                        <span class="agreement padding-maker" id="agreement"><input type="checkbox">Я даю согласие на обработку персональных данных в соответствии с ФЗ "О применении контрольно-кассовой техники при осуществлении расчетов в РФ"</span>
+                        <span class="wrongInput hidden" id="wrongAgreement">Необходимо подтвердить согласие</span>
+                        <div class="yellowDisplayBig"><span>Итого:</span><br><span id="LastPrice"></span></div>
+                        <span class="s_endButton last_but" id="sendButton">оформить заказ</span>
+                        <div class="yellowDisplay higher"><span>Товары</span><span id="finalPrice" class="rightText"></span></div>
+                        <div class="yellowDisplay morehigher"><span>Доставка</span><span id="finalDelivery" class="rightText2"></span></div>
+
+                    </div>
+                </div>
+            </div>
+
+
+
+
+
+
+            <!-- onChange="call(this.value); -->
+
+
+
+
+
+
+
+
+
+        </div>
+        <div id="Pvz_open" class="hidden Pvz-open">
+            <div class="backfromPvz"><span class="openMap comeBack" id="openMap">карта</span><span class="comeBack2" id="backfromPvz">Вернуться</span></div>
+            <div id="makeDecision" class="hidden makedecision">Выбрать</div>
+            <div id="listOfPvz" class="listOfPvz"></div>
+            <div id="map" class="ymap"></div>
+        </div>
+    </section>
+
+
+    <section class="prices">
+        <div class="container">
+            <div class="prices__block">
+                <div class="prices__block-hh">Собрав пазл, ты получишь следующую сумму</div>
+                <div class="prices__line">20<span class="rub">₽</span></div>
+                <div class="prices__line">500<span class="rub">₽</span></div>
+                <div class="prices__line">1 750<span class="rub">₽</span></div>
+                <div class="prices__line">3 500<span class="rub">₽</span></div>
+                <div class="prices__line">15 000<span class="rub">₽</span></div>
+                <div class="prices__line">100 000<span class="rub">₽</span></div>
+                <div class="prices__ps">
+                    Каждый <span>десятый</span> пазл содержит <br>более <span>3 500 рублей</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="priz padded pb-0">
+        <img src="img/priz2.png" alt="" class="priz__img">
+        <img src="img/priz3.jpg" alt="" class="priz__img2">
+        <div class="container pr">
+            <h2 class="priz__hh">Главный приз</h2>
+            <div class="text-center">
+                <img src="img/priz.png" alt="" class="responsive">
+            </div>
+            <h3>Узнай за одну минуту от любимых блогеров <br>как работает денежный пазл!</h3>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="priz__video" style="background-image: url(img/man1.jpg);">
+                        <div class="priz__video-title">Настя Ивлеева </div>
+                        <div class="priz__mp3">
+                            <video src="img/v1.mp4" controls></video>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="priz__video" style="background-image: url(img/man2.jpg);">
+                        <div class="priz__video-title">Gan 13</div>
+                        <div class="priz__mp3">
+                            <video src="img/v2.MOV" controls></video>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h4>Как получить деньги?</h4>
+            <div class="priz__els">
+                <div class="priz__el">
+                    <div class="priz__el-title"><img src="img/n1.svg" alt=""></div>
+                    <div class="priz__el-text">Cначала собери пазл. В нем 256 элементов и он представляет собой большой QR код. </div>
+                </div>
+                <div class="priz__el priz__el--mod">
+                    <div class="priz__el-title"><img src="img/n2.svg" alt=""></div>
+                    <div class="priz__el-text">Отсканируй получившийся QR-код при помощи камеры твоего смартфона и перейди по открывшейся ссылке</div>
+                </div>
+                <div class="priz__el priz__el--mod">
+                    <div class="priz__el-title"><img src="img/n3.svg" alt=""><img src="img/n5.svg" alt="" class="img2"></div>
+                    <div class="priz__el-text">Введи проверочный код, указанный в инструкции к пазлу. Она находится в коробке.</div>
+                </div>
+                <div class="priz__el">
+                    <div class="priz__el-title"><img src="img/n4.svg" alt=""><img src="img/n6.svg" alt="" class="img2"></div>
+                    <div class="priz__el-text">Дальше нужно ввести свой номер телефона или номер банковской карты, в течение 5 секунд произойдет пополнение баланса телефона или перевод средств на карту. </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section class="example">
+        <img src="images/nobile_page.png" class="mob_page_2">
+        <img src="images/prev.png" class="p_rev" id="prev">
+        <span id="need_div" class="n_eed">
+            <img src="images/Render_1.png" class="exmaple_img" id="firstPage">
+            <img src="images/Render_2.png" class="exmaple_img" id="secondPage">
+            <img src="images/Render_3.png" class="exmaple_img" id="thirdPage"> </span>
+        <img src="images/next.png" class="n_ext" id="next">
+    </section>
+    <section class="how">
+        <div class="c_ontainer">
+            <div class="black_block">
+                <div class="header_white_in_block">Заказ и доставка</div>
+                <div class="header_white_in_block sm_all">Закажи сейчас, плати потом</div>
+                <div class="how_block_line">
+                    <div class="n_umber">1</div>
+                    <div class="white_block_in_block"><span class="red_block_n">Заказать</span><img src="images/curs.png" class="cursorClass"><span class="text_in_white LastCheck">Добавьте пазл в корзину, заполните контактные данные и выберите способ доставки</span></div>
+                    <div class="n_umber">2</div>
+                    <div class="white_block_in_block"><img src="images/creditCard.svg" class="img_in_block "><span class="text_in_white">Оплачиваете товар: доступна как онлайн оплата, так и оплата при получении. При оплате вам придет подтверждение заказа на электронную почту
+                    </span></div>
+                    <div class="n_umber">3</div>
+                    <div class="white_block_in_block"><img src="images/miniMIlPuzzle.png" class="img_in_block imgGoUp"><span class="text_in_white goABitDown">Доставим через 3-10 дней без предоплаты. Оплачиваете заказ при получении</span> </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="quotes padded">
+        <div class="container">
+            <h2 class="quotes__hh">Отзывы покупателей</h2>
+            <div class="row">
+                <div class="col-md-4">
+                    <a href="img/q3.jpg" data-lightbox="1" class="quotes__el" style="background-image: url(img/q3.jpg);"></a>
+                </div>
+                <div class="col-md-4">
+                    <a href="img/q1.jpg" data-lightbox="1" class="quotes__el" style="background-image: url(img/q1.jpg);"></a>
+                </div>
+                <div class="col-md-4">
+                    <a href="img/q2.jpg" data-lightbox="1" class="quotes__el" style="background-image: url(img/q2.jpg);"></a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="first first--mod">
+        <img src="img/first.png" alt="" class="first__img2">
+        <div class="container pr ">
+            <div class="first__block ">
+                <div class="first__skidka ">-50%</div>
+                <div class="first__block-top ">
+                    <div class="first__block-hh ">ЦЕНА<br> СО СКИДКОЙ:</div>
+                    <div>
+                        <div class="first__block-price-old rub2 ">4 000<span class="rub">₽ </span></div>
+                        <div class="first__block-price ">2 000<span class="rub ">₽</span></div>
+                    </div>
+                </div>
+                <form action=" ">
+                    <div class="form-line "><input type="text " placeholder="Введите ваше имя "></div>
+                    <div class="form-line "><input type="text " placeholder="Введите ваш телефон "></div>
+                    <button class="btn " type="submit ">заказать сейчас</button>
+                </form>
+                <div class="first__block-ps1 ">осталось только <span>15</span> пазлов по акции!</div>
+                <div class="first__block-ps2 ">Акция действует до нового года</div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer ">
+        <div class="container ">
+            <div class="row m-0 ">
+                <menu>
+                    <a href="pravila.html ">Правила акции</a>
+                    <a href="politika.html ">Политика конфиденциальности</a>
+                    <a href="ps.html ">Пользовательское соглашение</a>
+                    <a href="vozvrat.html ">Возврат и обмен товара</a>
+                </menu>
+                <div class="footer__div ">Огранизатор Акции ИП Подзигун Виктория Константиновна</div>
+                <div class="footer__div ">910215490236 / 321774600100571</div>
+            </div>
+        </div>
+    </footer>
+
+    <div class="scroll ">
+        <svg xmlns="http://www.w3.org/2000/svg " viewBox="0 0 240.835 240.835 " width="20 " height="20 "><path d="M129.007 57.819c-4.68-4.68-12.499-4.68-17.191 0L3.555 165.803c-4.74 4.74-4.74 12.427 0 17.155 4.74 4.74 12.439 4.74 17.179 0l99.683-99.406
+            99.671 99.418c4.752 4.74 12.439 4.74 17.191 0 4.74-4.74 4.74-12.427 0-17.155L129.007 57.819z " fill="#FFF "></path></svg>
+    </div>
+    <script type="text/javascript " src="js/validation.js " defer></script>
+    <script type="text/javascript " src="js/libs.js " defer></script>
+    <script type="text/javascript " src="js/js.js " defer></script>
+    <script type="text/javascript " src="js/smth.js " defer></script>
+    <script type="text/javascript " src="js/for_paymant.js " defer></script>
+    <script type="text/javascript " src="js/as.js " defer></script>
+</body>
+
+</html>

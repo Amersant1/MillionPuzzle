@@ -1,0 +1,676 @@
+import flask
+from flask import Flask
+from flask import jsonify, Request
+from flask_cors import CORS
+import requests
+import json
+import math
+
+app = Flask(__name__)
+CORS(app)
+
+URL = 'https://api.shiptor.ru/shipping/v1'
+headers = {
+        'Content-Type' : 'application/json',
+        'X-Authorization-Token' : '05eaca80d8fbc53660329ccc6ce97b3da3823788'
+    }
+
+@app.route('/proxy/suggestSettlement/<var>')
+def search_city(var):
+    cities_on=False
+    locality=str(var)
+    new_par={
+        "id": "JsonRpcClient.js",
+        "jsonrpc": "2.0",
+        "method": "suggestSettlement",
+        "params": {
+            "query": locality,
+        }
+    }
+    request = requests.post(URL, headers=headers, json=new_par)
+    request= json.loads(request.text)
+    variant=[]
+    lines=0
+    result=request.get("result")
+    i=0
+    if len(result)>6:
+        while lines <6:
+            if result[i].get("type")!="город" or cities_on==False:
+                cities_on=True
+                name=result[i].get("short_readable")
+                need_name=list(map(str,name.split()))
+                name=str(need_name[len(need_name)-2])+" "+ str(need_name[len(need_name)-1])
+                oblast=result[i].get("readable_parents")
+                country=result[i].get('country')
+                country_name=country.get("name")
+                id1=str(result[i].get("kladr_id"))
+                id1=id1[0:8]+"00000"
+                variant.append({"name":name,"oblast":oblast,"country":country_name,"klad-id":int(id1)}) 
+                lines=lines+1
+                i=i+1
+            else:
+                i=i+1
+            if i==len(result)-1:
+                    break
+            
+    else:
+        for i in range(len(result)):
+            if result[i].get("type")!="город" or cities_on==False:
+                cities_on=True
+                name=result[i].get("short_readable")
+                need_name=list(map(str,name.split()))
+                name=str(need_name[len(need_name)-2])+" "+ str(need_name[len(need_name)-1])
+                oblast=result[i].get("readable_parents")
+                country=result[i].get('country')
+                country_name=country.get("name")
+                id1=str(result[i].get("kladr_id"))
+                id1=id1[0:8]+"00000"
+                variant.append({"name":name,"oblast":oblast,"country":country_name,"klad-id":int(id1)})
+    result={"result":variant} 
+    return (result)
+@app.route('/proxy/calculateShipping/<var>')
+def calculate_shipping(var):
+    headers = {
+        'Content-Type' : 'application/json',
+        'X-Authorization-Token' : '05eaca80d8fbc53660329ccc6ce97b3da3823788'
+    }
+    new_par={
+        "id": "JsonRpcClient.js",
+        "method": "calculateShipping",
+        "params": {
+            "cod": 0,
+            "stock": True,
+            "declared_cost": 1470,
+            "length":23.5,
+            "width": 23.5,
+            "height": 4,
+            "weight": 0.33,
+            "kladr_id_from": "77000000000",
+            "kladr_id": str(var),
+            "pick_up_type": "courier",
+            "cashless_payment": True
+        },
+        "jsonrpc": "2.0"
+    }
+    request = requests.post(URL, headers=headers, json=new_par)
+    request= json.loads(request.text)
+    variant_deliver=[]
+    result=request.get("result")
+    result=result.get("methods")
+
+    for i in range(len(result)):
+        meth=result[i].get("method")
+        id1=meth.get("id")
+        
+        name=meth.get("name")
+        cost=result[i].get("cost")
+        total=cost.get("total")
+        delivery_days=result[i].get("days")
+        suma=total.get("sum")
+        if meth.get("category")=="to-door":
+            variant_deliver.append({"name":name,"price":suma,"delivery_days":delivery_days})
+
+    return json.dumps(variant_deliver, indent=4, sort_keys=True)
+
+@app.route('/proxy/getDelivery/<id>&&<list1>')
+def get_delivery(id,list1):
+    headers = {
+        'Content-Type' : 'application/json',
+        'X-Authorization-Token' : '05eaca80d8fbc53660329ccc6ce97b3da3823788'
+    }
+    new_par={
+        "id": "JsonRpcClient.js",
+        "method": "calculateShipping",
+        "params": {
+            "cod": 0,
+            "stock": True,
+            "declared_cost": 1470,
+            "length":23.5,
+            "width": 23.5,
+            "height": 4,
+            "weight": 0.33,
+            "kladr_id_from": "77000000000",
+            "kladr_id": str(id),
+            "cashless_payment": True
+        },
+        "jsonrpc": "2.0"
+    }
+    list2=list(list1.split())
+    request = requests.post(URL, headers=headers, json=new_par)
+    request= json.loads(request.text)
+    variant_deliver=[]
+    suma_pvz_list=[]
+    suma_to_door_list=[]
+    result=request.get("result")
+    result=result.get("methods")
+    pvz_list=[]
+    boolev=0
+    delivery_days_min=100
+    PVZ_days_min=100
+    for i in range(len(result)):
+        meth=result[i].get("method")
+        id1=meth.get("id")
+        for j in list2:
+            if str(j)==str(id1):
+                boolev=1
+                ship_method=j
+        if boolev==1:
+            name=meth.get("name")
+            cost=result[i].get("cost")
+            total=cost.get("total")
+            delivery_days=result[i].get("days")
+            suma=total.get("sum")
+            if meth.get("category")=="to-door":
+                variant_deliver.append({"name":name,"price":suma,"delivery_days":delivery_days,"shipping_method":ship_method})
+                delivery_days1=delivery_days.split()
+                delivery_days=delivery_days1[0]
+                if int(delivery_days)<delivery_days_min:
+                    delivery_days_min=int(delivery_days)
+                suma_to_door_list.append(int(suma))
+            else:
+                pvz_list.append({"name":name,"price":suma,"delivery_days":delivery_days,"shipping_method":ship_method})
+                delivery_days1=delivery_days.split()
+                delivery_days=delivery_days1[0]
+                if int(delivery_days)<PVZ_days_min:
+                    PVZ_days_min=int(delivery_days)
+                suma_pvz_list.append(int(suma))
+        boolev=0
+    suma_del=0
+    sum_chis=0
+    sum_deliver=1000
+    for i in range(len(suma_pvz_list)):
+        suma_del+=int(suma_pvz_list[i])
+        sum_chis+=1
+    if not sum_chis==0:
+        sum_pvz=math.ceil(suma_del/sum_chis)
+    suma_del=0
+    sum_chis=0
+    for i in range(len(suma_to_door_list)):
+        suma_del+=int(suma_to_door_list[i])
+        sum_chis+=1
+    if not sum_chis==0:
+        sum_deliver=math.ceil(suma_del/sum_chis)
+    if len(pvz_list)==0:
+        IsPvzReal=False
+        sum_pvz=0
+    else:
+        IsPvzReal=True
+    
+    nugnii_list=[[True,sum_deliver,delivery_days_min],[IsPvzReal,sum_pvz,PVZ_days_min],pvz_list,variant_deliver]
+    return json.dumps(nugnii_list, indent=4, sort_keys=True)
+@app.route("/proxy/DotsOnAreaUpdated/<id>&&<geo_par>&&<geo_mer>&&<list1>")
+def dotsOnAreaUpdate(id,geo_par,geo_mer,list1):
+    i=0
+    list1=list(map(int,list1.split(" ")))
+    id=str(id)
+    geo_par=float(geo_par)
+    geo_mer=float(geo_mer)
+    if (id=="7800000000000" or id=="7700000000000" or id=="5400000100000" or id=="6600000100000" or id=="1600000100000" or id=="5200000100000" or id=="7400000100000" or id=="6300000100000" or id=="5500000100000" or id=="6100000100000" or id=="0200000100000" or id=="2400000100000" or id=="3600000100000"):
+        URL = 'https://checkout.shiptor.ru/api'
+        id1=id
+        new_par= { "id": "JsonRpcClient.js",
+                "jsonrpc": "2.0",
+                "wk":"Q0HVWQCAEPB3B0LVAGMFZJYOBQ5KGTIJJ31U188197",
+                "method": "getDeliveryPoints",
+                "params": {
+                    "shipping_method":list1,
+                    "kladr_id": id1,
+                    "limits":{
+                        "length":23.5,
+                        "width": 23.5,
+                        "height": 4,
+                        "weight": 0.33,
+                        "cod": 0
+
+            }}}
+        spots=[]      
+         
+        request = requests.post(URL, json=new_par)
+        request= json.loads(request.text)
+        request=request.get("result")
+        for i in range(len(request)):
+            id_point=request[i].get("id")
+            lim=request[i].get("limits")
+            price=lim.get("dimension_sum")
+            if price==None:
+                price=0
+            cod=request[i].get("cod")
+            card=request[i].get("card")
+            if card=="null":
+                card=False
+            if cod=="null":
+                cod=False
+            card=request[i].get("card")
+            name=request[i].get("name")
+            address=request[i].get("address")
+            courier=request[i].get("courier")
+            phone=request[i].get("phones")
+            time_table1=request[i].get("work_schedule")
+            gpsloc=request[i].get("gps_location")
+            gps_meredian=gpsloc.get("longitude")
+            gps_paral=gpsloc.get("latitude")
+            code=request[i].get("code")
+            ship_method=request[i].get("shipping_methods")
+            comment=request[i].get("trip_description")
+            if (math.fabs(float(gps_meredian)-geo_mer)<0.017 and math.fabs(float(gps_paral)-geo_par)<0.017)and courier!="euroset":
+                spots.append({"name":name,"courier":courier,"phone":phone,"time_table":time_table1,"gps_paral":gps_paral,"gps_meredian":gps_meredian,"comment":comment,"cod":cod,"card":card,"price":price,"address":address,"code":code,"id":id_point,"shipping_method":ship_method})
+                
+                
+
+                
+    else:
+        URL = 'https://checkout.shiptor.ru/api'
+        id1=id
+        
+        new_par= { "id": "JsonRpcClient.js",
+                "jsonrpc": "2.0",
+                "wk":"Q0HVWQCAEPB3B0LVAGMFZJYOBQ5KGTIJJ31U188197",
+                "method": "getDeliveryPoints",
+                "shippingMethod":list1,
+                "params": {
+                    "kladr_id": id1,
+                    "limits":{
+                        "length":23.5,
+                        "width": 23.5,
+                        "height": 4,
+                        "weight": 0.33,
+                        "cod": 0
+
+            }}}
+        spots=[]       
+        request = requests.post(URL, json=new_par)
+        request= json.loads(request.text)
+        request=request.get("result")
+        for i in range(len(request)):
+            id_point=request[i].get("id")
+            lim=request[i].get("limits")
+            price=lim.get("dimension_sum")
+            if price==None:
+                price=0
+            cod=request[i].get("cod")
+            card=request[i].get("card")
+            if card=="null":
+                card=False
+            if cod=="null":
+                cod=False
+            card=request[i].get("card")
+            name=request[i].get("name")
+            address=request[i].get("address")
+            courier=request[i].get("courier")
+            phone=request[i].get("phones")
+            time_table1=request[i].get("work_schedule")
+            gpsloc=request[i].get("gps_location")
+            gps_meredian=gpsloc.get("longitude")
+            gps_paral=gpsloc.get("latitude")
+            code=request[i].get("code")
+            ship_method=request[i].get("shipping_methods")
+            comment=request[i].get("trip_description")
+            spots.append({"name":name,"courier":courier,"phone":phone,"time_table":time_table1,"gps_paral":gps_paral,"gps_meredian":gps_meredian,"comment":comment,"cod":cod,"card":card,"price":price,"address":address,"code":code,"id":id_point,"shipping_method":ship_method})
+    return json.dumps(spots, indent=4, sort_keys=True)
+# @app.route("/proxy/addPackage/<params1>", methods=['POST',"GET"])
+# def addPackage(params1):
+#     params=json.loads(params1)
+#     apartaments=int(params.get("apartments"))
+#     shopArticle="puzzle"
+#     price=1470
+#     country=params.get("country")
+#     payment=params.get("payment")
+#     count=int(params.get("amount"))
+#     pvzID=params.get("pvzId")
+#     name=params.get("name")
+#     surname=params.get("surname")
+#     phone=params.get("phone")
+#     email=params.get("email")
+#     street=params.get("street")
+#     house=str(params.get("house"))
+#     shipping_method1=int(params.get("shipping_method"))
+#     delivery_price1=float(params.get("delivery_price"))
+#     receiver="MillionPuzzle"
+#     otchestvo=params.get("patronymic")
+#     courierORpvz=params.get("courierOrPvz")
+#     city=params.get("city")
+#     kladr_id=params.get("kladr_id")
+#     URL = 'https://checkout.shiptor.ru/api'
+#     if courierORpvz=="courier":
+#         new_par= { "wk":"Q0HVWQCAEPB3B0LVAGMFZJYOBQ5KGTIJJ31U188197",
+#                 "id": "JsonRpcClient.js",
+#                 "jsonrpc": "2.0",
+#                 "method": "addOrder",
+#                 "params": {
+#                     "price":price*count,
+#                     "length":23.5,
+#                     "width": 23.5,
+#                     "height": 4,
+#                     "weight": 0.3,
+#                     "cod": False,
+#                     "deliveryPrice":delivery_price1,
+#                     "payment":"card",
+#                     "departure":{
+#                             "shipping_method":shipping_method1,
+#                             "address":{
+#                                 "street":street,
+#                                 "apartment":apartaments,
+#                                 "house":house,
+#                                 "country":country,
+#                                 "patronymic":otchestvo,
+#                                 "receiver":receiver,
+#                                 "email":email,
+#                                 "phone":phone,
+#                                 "settlement":city,
+#                                 "name":name,
+#                                 "surname":surname,
+#                                 "kladr_id":kladr_id
+
+#                             }
+#                             },
+#                     "products":[{
+#                         "id":shopArticle,
+#                         "name":"MillionPuzzle",
+#                         "quantity":count,
+#                         "price":price,
+#                 }],
+#             }}
+#         request=requests.post(URL,json=new_par)
+#         request=json.loads(request.text)
+#         request=request.get("result")
+#         id=request.get("id")
+#         return json.dumps({"result":str(id)}, indent=4, sort_keys=True)
+#     else:
+#         new_par= { "wk":"Q0HVWQCAEPB3B0LVAGMFZJYOBQ5KGTIJJ31U188197",
+#                 "id": "JsonRpcClient.js",
+#                 "jsonrpc": "2.0",
+#                 "method": "addOrder",
+#                 "params": {
+#                     "price":price*count,
+#                     "length":23.5,
+#                     "width": 23.5,
+#                     "height": 4,
+#                     "weight": 0.3,
+#                     "cod": False,
+#                     "payed":False,
+#                     "deliveryPrice":delivery_price1,
+#                     "payment":payment,
+#                     "departure":{
+#                             "shipping_method":shipping_method1,
+#                             "delivery_point":pvzID,
+#                             "address":{
+#                                 "country":country,
+#                                 "patronymic":otchestvo,
+#                                 "receiver":receiver,
+#                                 "email":email,
+#                                 "phone":phone,
+#                                 "settlement":city,
+#                                 "name":name,
+#                                 "surname":surname,
+#                                 "kladr_id":kladr_id
+
+#                             }
+#                             },
+#                     "products":[{
+#                         "id":shopArticle,
+#                         "name":"MillionPuzzle",
+#                         "quantity":count,
+#                         "price":price,
+                        
+
+#                 }],
+
+#             }}
+#         request=requests.post(URL,json=new_par)
+#         request=json.loads(request.text)
+#         request=request.get("result")
+#         id=request.get("id")
+#         return str(id)
+@app.route("/proxy/getDeliveryMethods")
+def Methods():
+    par={
+    "id": "JsonRpcClient.js",
+    "jsonrpc": "2.0",
+    "wk": "Q0HVWQCAEPB3B0LVAGMFZJYOBQ5KGTIJJ31U188197",
+    "method": "getAllShippingMethods",
+    "params": {}
+    }
+    URL="https://checkout.shiptor.ru/api"
+    request=requests.post(URL,json=par)
+    request=json.loads(request.text)
+    request=request.get("result")
+    listOfMethodsDelivery=[]
+    listOfMethodsPVZ=[]
+    number_list=""
+    for i in range(1,300):
+        req=request.get(str(i))
+        if not req==None:
+            if req.get("active")==True:
+                name=req.get("name")
+                id=i
+                if req.get("category")=="to-door":
+                    listOfMethodsDelivery.append({"id":id,"name":name})
+                else:
+                    listOfMethodsPVZ.append({"id":id,"name":name})
+                number_list=number_list+str(i)+" "
+    obj={"deliveryMethods":listOfMethodsDelivery,
+    "PVZMethods":listOfMethodsPVZ,"number_list":number_list}
+    return(obj)
+
+@app.route("/proxy/addPackage/<params1>", methods=['POST',"GET"])
+def addPackage(params1):
+    params=json.loads(params1)
+    print(params)
+    apartaments=int(params.get("apartments"))
+    shopArticle="puzzle"
+    price=1470
+    country=params.get("country")
+    payment=params.get("payment")
+    count=int(params.get("amount"))
+    pvzID=params.get("pvzId")
+    name=params.get("name")
+    surname=params.get("surname")
+    phone=params.get("phone")
+    email=params.get("email")
+    street=params.get("street")
+    house=str(params.get("house"))
+    shipping_method1=int(params.get("shipping_method"))
+    delivery_price1=float(params.get("delivery_price"))
+    receiver="MillionPuzzle"
+    otchestvo=params.get("patronymic")
+    courierORpvz=params.get("courierOrPvz")
+    city=params.get("city")
+    kladr_id=params.get("kladr_id")
+    if not( payment=="cash" or payment=="card"):
+
+        URL = 'https://checkout.shiptor.ru/api'
+        if courierORpvz=="courier":
+            new_par= { "wk":"Q0HVWQCAEPB3B0LVAGMFZJYOBQ5KGTIJJ31U188197",
+                    "id": "JsonRpcClient.js",
+                    "jsonrpc": "2.0",
+                    "method": "addOrder",
+                    "params": {
+                        "price":price*count,
+                        "length":23.5,
+                        "width": 23.5,
+                        "height": 4,
+                        "weight": 0.3,
+                        "cod": False,
+                        "deliveryPrice":delivery_price1,
+                        "payment":"card",
+                        "departure":{
+                                "shipping_method":shipping_method1,
+                                "address":{
+                                    "street":street,
+                                    "apartment":apartaments,
+                                    "house":house,
+                                    "country":country,
+                                    "patronymic":otchestvo,
+                                    "receiver":receiver,
+                                    "email":email,
+                                    "phone":phone,
+                                    "settlement":city,
+                                    "name":name,
+                                    "surname":surname,
+                                    "kladr_id":kladr_id
+
+                                }
+                                },
+                        "products":[{
+                            "id":shopArticle,
+                            "name":"MillionPuzzle",
+                            "quantity":count,
+                            "price":price,
+                    }],
+                }}
+            request=requests.post(URL,json=new_par)
+            request=json.loads(request.text)
+            request=request.get("result")
+            id=request.get("id")
+            return json.dumps({"result":str(id)}, indent=4, sort_keys=True)
+        else:
+            new_par= { "wk":"Q0HVWQCAEPB3B0LVAGMFZJYOBQ5KGTIJJ31U188197",
+                    "id": "JsonRpcClient.js",
+                    "jsonrpc": "2.0",
+                    "method": "addOrder",
+                    "params": {
+                        "price":price*count,
+                        "length":23.5,
+                        "width": 23.5,
+                        "height": 4,
+                        "weight": 0.3,
+                        "cod": False,
+                        "payed":False,
+                        "deliveryPrice":delivery_price1,
+                        "payment":"card",
+                        "departure":{
+                                "shipping_method":shipping_method1,
+                                "delivery_point":pvzID,
+                                "address":{
+                                    "country":country,
+                                    "patronymic":otchestvo,
+                                    "receiver":receiver,
+                                    "email":email,
+                                    "phone":phone,
+                                    "settlement":city,
+                                    "name":name,
+                                    "surname":surname,
+                                    "kladr_id":kladr_id
+
+                                }
+                                },
+                        "products":[{
+                            "id":shopArticle,
+                            "name":"MillionPuzzle",
+                            "quantity":count,
+                            "price":price,
+                            
+
+                    }],
+
+                }}
+            request=requests.post(URL,json=new_par)
+            request=json.loads(request.text)
+            request=request.get("result")
+            id=request.get("id")
+            return str(id)
+    else:  
+        URL = 'https://api.shiptor.ru/shipping/v1'
+        headers = {
+        'Content-Type' : 'application/json',
+        'X-Authorization-Token' : '05eaca80d8fbc53660329ccc6ce97b3da3823788'
+        }
+        if payment=="card":
+            cashless_payment=True
+        else:
+            cashless_payment=False
+        if courierORpvz=="courier":
+            new_par= { "wk":"Q0HVWQCAEPB3B0LVAGMFZJYOBQ5KGTIJJ31U188197",
+                    "id": "JsonRpcClient.js",
+                    "jsonrpc": "2.0",
+                    "method": "addPackage",
+                    "params": {
+                        "length":23.5,
+                        "width": 23.5,
+                        "height": 4,
+                        "weight": 0.3,
+                        "cod": 0,
+                        "declared_cost":price*count+delivery_price1,
+                        "departure":{
+                                "cashless_payment":cashless_payment,
+                                "shipping_method":shipping_method1,
+                                "address":{
+                                    "street":street,
+                                    "apartment":apartaments,
+                                    "house":house,
+                                    "country":country,
+                                    "patronymic":otchestvo,
+                                    "receiver":receiver,
+                                    "email":email,
+                                    "phone":phone,
+                                    "settlement":city,
+                                    "name":name,
+                                    "surname":surname,
+                                    "kladr_id":kladr_id
+
+                                }
+                                },
+                        "products":[{
+                            "shopArticle":shopArticle,
+                            "name":"MillionPuzzle",
+                            "count":count,
+                            "price":price,
+                    }],
+                }}
+            
+            request=requests.post(URL,json=new_par,headers=headers)
+            request=json.loads(request.text)
+            print(request)
+            request=request.get("result")
+            
+            id=request.get("label_url")
+
+            return json.dumps({"result":str(id)}, indent=4, sort_keys=True)
+        else:
+            new_par= { "wk":"Q0HVWQCAEPB3B0LVAGMFZJYOBQ5KGTIJJ31U188197",
+                    "id": "JsonRpcClient.js",
+                    "jsonrpc": "2.0",
+                    "method": "addPackage",
+                    "params": {
+                        "length":23.5,
+                        "width": 23.5,
+                        "height": 4,
+                        "weight": 0.3,
+                        "declared_cost":price*count+delivery_price1,
+
+
+                        "departure":{
+                                "cashless_payment":cashless_payment,
+                                "shipping_method":shipping_method1,
+                                "delivery_point":pvzID,
+                                "address":{
+                                    "country":country,
+                                    "patronymic":otchestvo,
+                                    "receiver":receiver,
+                                    "email":email,
+                                    "phone":phone,
+                                    "settlement":city,
+                                    "name":name,
+                                    "surname":surname,
+                                    "kladr_id":kladr_id
+
+                                }
+                                },
+                        "products":[{
+                            "shopArticle":shopArticle,
+                            "name":"MillionPuzzle",
+                            "count":count,
+                            "price":price,
+                            
+
+                    }],
+
+                }}
+            request=requests.post(URL,json=new_par,headers=headers)
+            request=json.loads(request.text)
+            print(request)
+
+            request=request.get("result")
+            id=request.get("label_url")
+            return json.dumps({"result":str(id)}, indent=4, sort_keys=True)
+app.run(debug=True)
