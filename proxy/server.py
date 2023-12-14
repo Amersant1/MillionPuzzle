@@ -12,7 +12,7 @@ CORS(app)
 URL = 'https://api.shiptor.ru/shipping/v1'
 headers = {
         'Content-Type' : 'application/json',
-        'X-Authorization-Token' : '05eaca80d8fbc53660329ccc6ce97b3da3823788'
+        'X-Authorization-Token' : ''
     }
 
 @app.route('/proxy/suggestSettlement/<var>')
